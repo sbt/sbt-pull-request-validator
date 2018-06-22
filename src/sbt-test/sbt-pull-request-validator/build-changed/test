@@ -1,0 +1,16 @@
+$ exec git init .
+$ exec git add .
+$ exec git commit -m Test
+$ exec git branch targetBranch
+
+$ touch a/foo.txt
+
+$ exec git add .
+$ exec git commit -m Updated
+
+> validatePullRequest
+
+$ exists a/target/ran
+$ exists b/target/ran
+-$ exists c/target/ran
+-$ exists target/ran
