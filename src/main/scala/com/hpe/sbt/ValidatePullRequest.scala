@@ -48,11 +48,13 @@ object ValidatePullRequest extends AutoPlugin {
     val prValidatorBuildAllTasks = settingKey[Seq[TaskKey[_]]]("The tasks that should be run when one of the files that have changed matches the build all filters")
     val prValidatorEnforcedBuildAllTasks = settingKey[Seq[TaskKey[_]]]("The tasks that should be run when build all is explicitly requested")
 
-    // asking github comments if this PR should be PLS BUILD ALL
+    // enforced build all configuration
     val prValidatorBuildAllKeyword = settingKey[Regex]("Magic phrase to be used to trigger building of the entire project instead of analysing dependencies")
     val prValidatorGithubHost = settingKey[String]("Hostname for github.com, defaults to github.com. Override for github enterprise")
     val prValidatorGithubRepository = settingKey[Option[String]]("Optional name of the repository where Pull Requests are created. Necessary for explicit 'enforced build all'")
-    val prValidatorGithubEnforcedBuildAll = taskKey[Boolean]("Checks via GitHub API if comments included the PLS BUILD ALL keyword")
+    val prValidatorGithubEnforcedBuildAll = taskKey[Boolean]("Checks via GitHub API if comments included the PLS BUILD ALL keyword.")
+    val prValidatorTravisNonPrEnforcedBuildAll = taskKey[Boolean]("Checks whether this is a non PR build on Travis.")
+    val prValidatorEnforcedBuildAll = taskKey[Boolean]("Whether an enforced build all is done.")
 
     // determining touched dirs and projects
     val prValidatorChangedProjects = taskKey[Changes]("List of touched projects in this PR branch")
@@ -152,6 +154,12 @@ object ValidatePullRequest extends AutoPlugin {
       }
     },
 
+    prValidatorTravisNonPrEnforcedBuildAll := {
+      sys.env.get(TravisPullIdEnvVarName).contains("false")
+    },
+
+    prValidatorEnforcedBuildAll := prValidatorTravisNonPrEnforcedBuildAll.value || prValidatorGithubEnforcedBuildAll.value,
+
     prValidatorChangedProjects := {
       val log = streams.value.log
 
@@ -224,8 +232,8 @@ object ValidatePullRequest extends AutoPlugin {
       val changedProjects = prValidatorChangedProjects.value
       val changedProjectTasks = prValidatorBuildAllTasks.value
 
-      val githubCommandEnforcedBuildAll = prValidatorGithubEnforcedBuildAll.value
-      val githubCommentForcedBuildAllTasks = prValidatorEnforcedBuildAllTasks.value
+      val enforcedBuildAll = prValidatorEnforcedBuildAll.value
+      val enforcedBuildAllTasks = prValidatorEnforcedBuildAllTasks.value
 
       val projectDependencies = Keys.buildDependencies.value.classpathRefs(thisProjectRef.value)
 
@@ -233,8 +241,8 @@ object ValidatePullRequest extends AutoPlugin {
 
       val dependencyChangedTasks = prValidatorTasks.value
 
-      if (githubCommandEnforcedBuildAll) {
-        githubCommentForcedBuildAllTasks
+      if (enforcedBuildAll) {
+        enforcedBuildAllTasks
       } else if (changedProjects.allBuildMatched) {
         changedProjectTasks
       } else if (isDependency) {
