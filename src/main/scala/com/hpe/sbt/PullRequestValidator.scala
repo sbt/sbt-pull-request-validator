@@ -76,21 +76,27 @@ object ValidatePullRequest extends AutoPlugin {
    */
 
   // settings
-  val PullIdEnvVarName = "ghprbPullId" // Set by "GitHub pull request builder plugin"
+  private val JenkinsPullIdEnvVarName = "ghprbPullId" // Set by "GitHub pull request builder plugin"
+  private val TravisPullIdEnvVarName = "TRAVIS_PULL_REQUEST"
 
-  val TargetBranchEnvVarName = "PR_TARGET_BRANCH"
-  val TargetBranchJenkinsEnvVarName = "ghprbTargetBranch"
+  private val TravisRepoName = "TRAVIS_REPO_SLUG"
 
-  val SourceBranchEnvVarName = "PR_SOURCE_BRANCH"
-  val SourcePullIdJenkinsEnvVarName = "ghprbPullId" // used to obtain branch name in form of "pullreq/17397"
+  private val TargetBranchEnvVarName = "PR_TARGET_BRANCH"
+  private val TargetBranchTravisEnvVarName = "TRAVIS_BRANCH"
+  private val TargetBranchJenkinsEnvVarName = "ghprbTargetBranch"
 
-  def localTargetBranch: Option[String] = sys.env.get("PR_TARGET_BRANCH")
+  private val SourceBranchEnvVarName = "PR_SOURCE_BRANCH"
 
-  def jenkinsTargetBranch: Option[String] = sys.env.get("ghprbTargetBranch")
+  private def localTargetBranch = sys.env.get(TargetBranchEnvVarName)
+  private def jenkinsTargetBranch = sys.env.get(TargetBranchJenkinsEnvVarName).map("origin/" + _)
+  private def travisTargetBranch = sys.env.get(TargetBranchTravisEnvVarName).map("origin/" + _)
 
-  def runningOnJenkins: Boolean = jenkinsTargetBranch.isDefined
+  private def localSourceBranch = sys.env.get(SourceBranchEnvVarName)
+  private def jenkinsSourceBranch = sys.env.get(JenkinsPullIdEnvVarName).map("pullreq/" + _)
 
-  def runningLocally: Boolean = !runningOnJenkins
+  private def jenkinsPullRequestId = sys.env.get(JenkinsPullIdEnvVarName).map(_.toInt)
+  private def travisPullRequestId = sys.env.get(TravisPullIdEnvVarName).filterNot(_ == "false").map(_.toInt)
+  private def pullRequestId = jenkinsPullRequestId orElse travisPullRequestId
 
   override lazy val buildSettings = Seq(
     includeFilter in validatePullRequest := "*",
@@ -100,21 +106,15 @@ object ValidatePullRequest extends AutoPlugin {
     excludeFilter in validatePullRequestBuildAll := NothingFilter,
 
     prValidatorSourceBranch := {
-      sys.env.get(SourceBranchEnvVarName) orElse
-        sys.env.get(SourcePullIdJenkinsEnvVarName).map("pullreq/" + _) getOrElse // Set by "GitHub pull request builder plugin"
-        "HEAD"
+      localSourceBranch orElse jenkinsSourceBranch getOrElse "HEAD"
     },
 
     prValidatorTargetBranch := {
-      (localTargetBranch, jenkinsTargetBranch) match {
-        case (Some(local), _) => local // local override
-        case (None, Some(branch)) => s"origin/$branch" // usually would be "master" or "release-2.3" etc
-        case (None, None) => "origin/master" // defaulting to diffing with "master"
-      }
+      localTargetBranch orElse jenkinsTargetBranch orElse travisTargetBranch getOrElse "origin/master"
     },
 
     prValidatorGithubHost := "github.com",
-    prValidatorGithubRepository := None,
+    prValidatorGithubRepository := sys.env.get(TravisRepoName),
 
     prValidatorBuildAllKeyword := """PLS BUILD ALL""".r,
 
@@ -124,7 +124,7 @@ object ValidatePullRequest extends AutoPlugin {
       val githubRepository = prValidatorGithubRepository.value
       val githubCredentials = Credentials.forHost(credentials.value, prValidatorGithubHost.value)
 
-      sys.env.get(PullIdEnvVarName).map(_.toInt).exists({ prId =>
+      pullRequestId.exists { prId =>
         log.info("Checking GitHub comments for PR validation options...")
 
         try {
@@ -149,7 +149,7 @@ object ValidatePullRequest extends AutoPlugin {
             log.warn("Unable to reach GitHub! Exception was: " + ex.getMessage)
             false
         }
-      })
+      }
     },
 
     prValidatorChangedProjects := {
