@@ -6,7 +6,7 @@ lazy val b = project.in(file("b")).dependsOn(a)
 lazy val c = project.in(file("c"))
   .settings(commonSettings)
 
-lazy val root = project.in(file(".")).aggregate(a, b, c)
+lazy val root = project.in(file(".")).settings(commonSettings).aggregate(a, b, c)
 
 val detectRun = taskKey[Unit]("")
 def commonSettings = Seq(
@@ -16,4 +16,4 @@ def commonSettings = Seq(
   },
   prValidatorTasks := Seq(detectRun)
 )
-prValidatorTargetBranch in ThisBuild := "targetBranch"
+ThisBuild / prValidatorTargetBranch := "targetBranch"

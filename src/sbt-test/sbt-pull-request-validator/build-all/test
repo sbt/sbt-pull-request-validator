@@ -1,0 +1,50 @@
+$ exec git init .
+$ exec git add .
+$ exec git commit -m Test
+$ exec git branch targetBranch
+
+# Ensure that an *.sbt file not in the root project doesn't trigger an all build
+$ touch a/build.sbt
+# Nor should a child file match
+$ touch foo/project/bar
+
+$ exec git add .
+$ exec git commit -m Updated
+
+> validatePullRequest
+
+$ exists a/target/ran
+-$ exists a/target/ran-all
+$ exists target/ran
+-$ exists target/ran-all
+
+> clean
+
+# Now change a *.sbt file in the root project
+$ touch version.sbt
+$ exec git add .
+$ exec git commit -m Updated
+
+> validatePullRequest
+
+-$ exists a/target/ran
+$ exists a/target/ran-all
+-$ exists target/ran
+$ exists target/ran-all
+
+> clean
+
+# Undo last change
+$ exec git reset --hard HEAD~1
+
+# And change something in the project folder
+$ touch project/foo/bar
+$ exec git add .
+$ exec git commit -m Updated
+
+> validatePullRequest
+
+-$ exists a/target/ran
+$ exists a/target/ran-all
+-$ exists target/ran
+$ exists target/ran-all

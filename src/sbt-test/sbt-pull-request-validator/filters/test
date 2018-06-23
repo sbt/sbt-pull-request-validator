@@ -1,0 +1,26 @@
+$ exec git init .
+$ exec git add .
+$ exec git commit -m Test
+$ exec git branch targetBranch
+
+# Trigger exact path include filter
+$ touch a/include/this
+# Trigger glob include filter but also exact exclude
+$ touch b/dont.include
+# Trigger path glob include
+$ touch c/foo/inc/blah
+# Trigger glob include with path glob exclude
+$ touch d/exclude/blah.include
+# Trigger regular glob include
+$ touch blah/foo.include
+
+$ exec git add .
+$ exec git commit -m Updated
+
+> validatePullRequest
+
+$ exists a/target/ran
+-$ exists b/target/ran
+$ exists c/target/ran
+-$ exists d/target/ran
+$ exists target/ran

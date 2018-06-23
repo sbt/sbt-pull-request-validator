@@ -13,7 +13,6 @@ libraryDependencies += "org.kohsuke" % "github-api" % "1.93"
 scriptedLaunchOpts ++= Seq(
   "-Dplugin.version=" + version.value
 )
-scriptedBufferLog := false
 
 // Bintray
 bintrayOrganization := Some("sbt")
