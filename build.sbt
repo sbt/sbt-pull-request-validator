@@ -17,7 +17,7 @@ scriptedLaunchOpts ++= Seq(
 // Bintray
 bintrayOrganization := Some("sbt")
 bintrayRepository := "sbt-plugin-releases"
-bintrayPackage := "sbt-release"
+bintrayPackage := "sbt-pull-request-validator"
 bintrayReleaseOnPublish := false
 
 // Release
