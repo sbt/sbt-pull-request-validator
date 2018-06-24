@@ -50,7 +50,7 @@ object ValidatePullRequest extends AutoPlugin {
 
     // enforced build all configuration
     val prValidatorBuildAllKeyword = settingKey[Regex]("Magic phrase to be used to trigger building of the entire project instead of analysing dependencies")
-    val prValidatorGithubHost = settingKey[String]("Hostname for github.com, defaults to github.com. Override for github enterprise")
+    val prValidatorGithubEndpoint = settingKey[URI]("URI for the GitHub API, defaults to https://api.github.com. Override for GitHub enterprise, note that the URI for GitHub enterprise should end in /api/v3.")
     val prValidatorGithubRepository = settingKey[Option[String]]("Optional name of the repository where Pull Requests are created. Necessary for explicit 'enforced build all'")
     val prValidatorGithubEnforcedBuildAll = taskKey[Boolean]("Checks via GitHub API if comments included the PLS BUILD ALL keyword.")
     val prValidatorTravisNonPrEnforcedBuildAll = taskKey[Boolean]("Checks whether this is a non PR build on Travis.")
@@ -62,7 +62,7 @@ object ValidatePullRequest extends AutoPlugin {
 
     // running validation
     val validatePullRequest = taskKey[Unit]("Validate pull request")
-    val validatePullRequestBuildAll = taskKey[Unit]("Validae pull request, building all projects")
+    val validatePullRequestBuildAll = taskKey[Unit]("Validate pull request, building all projects")
   }
 
   import autoImport._
@@ -115,7 +115,7 @@ object ValidatePullRequest extends AutoPlugin {
       localTargetBranch orElse jenkinsTargetBranch orElse travisTargetBranch getOrElse "origin/master"
     },
 
-    prValidatorGithubHost := "github.com",
+    prValidatorGithubEndpoint := uri("https://api.github.com"),
     prValidatorGithubRepository := sys.env.get(TravisRepoName),
 
     prValidatorBuildAllKeyword := """PLS BUILD ALL""".r,
@@ -124,16 +124,20 @@ object ValidatePullRequest extends AutoPlugin {
       val log = streams.value.log
       val buildAllMagicPhrase = prValidatorBuildAllKeyword.value
       val githubRepository = prValidatorGithubRepository.value
-      val githubCredentials = Credentials.forHost(credentials.value, prValidatorGithubHost.value)
+      val githubEndpoint = prValidatorGithubEndpoint.value
+      val githubCredentials = Credentials.forHost(credentials.value, githubEndpoint.getHost)
 
       pullRequestId.exists { prId =>
         log.info("Checking GitHub comments for PR validation options...")
 
         try {
           import scala.collection.JavaConverters._
-          val gh = githubCredentials match {
-            case Some(creds) => GitHubBuilder.fromEnvironment().withOAuthToken(creds.passwd).build()
-            case _ => GitHubBuilder.fromEnvironment().build()
+          val gh = {
+            val builder = GitHubBuilder.fromEnvironment().withEndpoint(githubEndpoint.toString)
+            githubCredentials match {
+              case Some(creds) => builder.withOAuthToken(creds.passwd).build()
+              case _ => builder.build()
+            }
           }
           val commentsOpt = githubRepository.map(repository => gh.getRepository(repository).getIssue(prId).getComments.asScala)
 
@@ -277,6 +281,26 @@ object ValidatePullRequest extends AutoPlugin {
       } apply { tasks: Seq[Task[Any]] =>
         tasks.join map { seq => () /* Ignore the sequence of unit returned */}
       }
-    }.value
+    }.value,
+
+    validatePullRequestBuildAll := Def.taskDyn {
+      val validationTasks = prValidatorBuildAllTasks.value
+
+      // Create a task for every validation task key and
+      // then zip all of the tasks together discarding outputs.
+      // Task failures are propagated as normal.
+      val zero: Def.Initialize[Seq[Task[Any]]] = Def.setting {
+        Seq(task(()))
+      }
+      validationTasks.map(taskKey => Def.task {
+        taskKey.value
+      }).foldLeft(zero) { (acc, current) =>
+        acc.zipWith(current) { case (taskSeq, task) =>
+          taskSeq :+ task.asInstanceOf[Task[Any]]
+        }
+      } apply { tasks: Seq[Task[Any]] =>
+        tasks.join map { seq => () /* Ignore the sequence of unit returned */}
+      }
+    }
   )
 }
