@@ -1,0 +1,17 @@
+$ exec git init .
+$ exec git add .
+$ exec git commit -m Test
+$ exec git branch targetBranch
+
+$ touch modules/a/foo.txt
+
+$ exec git add .
+$ exec git commit -m Updated
+
+> validatePullRequest
+
+$ exists modules/a/target/ran
+$ exists modules/b/target/ran
+-$ exists modules/c/target/ran
+$ exists modules/extra-dir/d/target/ran
+-$ exists target/ran

@@ -196,10 +196,10 @@ object ValidatePullRequest extends AutoPlugin {
         .flatMap(project => project.base.relativeTo(rootBaseDir)
           .map { relativePath =>
             val projRef = ProjectRef(extracted.structure.root, project.id)
-            if (relativePath.getName == "") {
+            if (relativePath.getPath == "") {
               "" -> projRef
             } else {
-              relativePath.getName + "/" -> projRef
+              relativePath.getPath + "/" -> projRef
             }
           }
         ).sortBy(_._1)
