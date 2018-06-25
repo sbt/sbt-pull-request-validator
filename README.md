@@ -60,7 +60,7 @@ This setting is defined per project.
 
 ### Forcing all projects to build
 
-You can force all projects to build by putting a phrase in the pull request description (or a comment). By default, this phrase is `PLS BUILD ALL`. This can be configured using the `prValidatorBuildAllKeyword` setting, which takes a regular expression. To change it:
+You can force all projects to build by adding a phrase to a comment on the PR. By default, this phrase is `PLS BUILD ALL`. This can be configured using the `prValidatorBuildAllKeyword` setting, which takes a regular expression. If you want to change it from the default:
 
 ```scala
 ThisBuild / prValidatorBuildAllKeyword := "BUILD ALL PLEASE".r
