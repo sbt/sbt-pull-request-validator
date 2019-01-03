@@ -17,3 +17,4 @@ def commonSettings = Seq(
   prValidatorTasks := Seq(detectRun)
 )
 ThisBuild / prValidatorTargetBranch := "targetBranch"
+ThisBuild / prValidatorTravisNonPrEnforcedBuildAll := false

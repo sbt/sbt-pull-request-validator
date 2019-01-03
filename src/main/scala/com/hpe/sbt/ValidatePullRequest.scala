@@ -262,14 +262,16 @@ object ValidatePullRequest extends AutoPlugin {
       val dependencyChangedTasks = prValidatorTasks.value
 
       if (enforcedBuildAll) {
+        log.debug(s"Building [$proj] because this is an enforced all build project")
         enforcedBuildAllTasks
       } else if (changedProjects.allBuildMatched) {
+        log.debug(s"Building [$proj] because the all build filter was matched")
         changedProjectTasks
       } else if (isDependency) {
         log.info(s"Building [$proj] because it or a dependency has changed")
         dependencyChangedTasks
       } else {
-        log.debug(s"Skipping build of [$proj] because it, and none of it's dependencies are changed")
+        log.debug(s"Skipping build of [$proj] because it, and none of its dependencies are changed")
         Seq()
       }
     },
