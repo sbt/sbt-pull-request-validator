@@ -16,6 +16,7 @@ def commonSettings = Seq(
   prValidatorTasks := Seq(detectRun)
 )
 ThisBuild / prValidatorTargetBranch := "targetBranch"
+ThisBuild / prValidatorTravisNonPrEnforcedBuildAll := false
 
 ThisBuild / validatePullRequest / includeFilter := (GlobFilter("*.include")
   || ValidatePullRequest.PathGlobFilter("**/inc/*")) || ValidatePullRequest.PathGlobFilter("a/include/this")
