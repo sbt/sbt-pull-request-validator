@@ -9,7 +9,7 @@ This was originally written by [@ktoso](https://github.com/ktoso) for Akka, and 
 You can add the plugin to your project by adding the following to `project/plugins.sbt`:
 
 ```scala
-addSbtPlugin("com.hpe.sbt" % "sbt-pull-request-validator" % "1.0.0-rc1")
+addSbtPlugin("com.hpe.sbt" % "sbt-pull-request-validator" % "1.0.0")
 ```
 
 Then, configure your project to run `sbt validatePullRequest` when pull requests get built.
