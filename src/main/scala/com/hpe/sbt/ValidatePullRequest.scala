@@ -132,20 +132,35 @@ object ValidatePullRequest extends AutoPlugin {
   private lazy val travisPullRequestId = sys.env.get(TravisPullIdEnvVarName).filterNot(_ == "false").map(_.toInt)
   private lazy val pullRequestId = jenkinsPullRequestId orElse travisPullRequestId
 
-  override lazy val buildSettings = Seq(
-    validatePullRequest / includeFilter := "*",
-    validatePullRequest / excludeFilter := "README.*",
-    validatePullRequestBuildAll / includeFilter := PathGlobFilter("project/**") || PathGlobFilter("*.sbt"),
-    validatePullRequestBuildAll / excludeFilter := NothingFilter,
+  override lazy val globalSettings = Seq(
+    validatePullRequest := (),
+    validatePullRequestBuildAll := (),
     prValidatorSourceBranch := {
       localSourceBranch orElse jenkinsSourceBranch getOrElse "HEAD"
     },
     prValidatorTargetBranch := {
       localTargetBranch orElse jenkinsTargetBranch orElse travisTargetBranch getOrElse "origin/main"
     },
+    prValidatorTasks := Nil,
+    prValidatorBuildAllTasks := Nil,
+    prValidatorEnforcedBuildAllTasks := Nil,
     prValidatorGithubEndpoint := uri("https://api.github.com"),
     prValidatorGithubRepository := sys.env.get(TravisRepoName),
     prValidatorBuildAllKeyword := """PLS BUILD ALL""".r,
+    prValidatorGithubEnforcedBuildAll := false,
+    prValidatorTravisNonPrEnforcedBuildAll := {
+      sys.env.get(TravisPullIdEnvVarName).contains("false")
+    },
+    prValidatorEnforcedBuildAll := false,
+    prValidatorChangedProjects := Changes(allBuildMatched = false, Set.empty),
+    prValidatorProjectBuildTasks := Nil
+  )
+
+  override lazy val buildSettings = Seq(
+    validatePullRequest / includeFilter := "*",
+    validatePullRequest / excludeFilter := "README.*",
+    validatePullRequestBuildAll / includeFilter := PathGlobFilter("project/**") || PathGlobFilter("*.sbt"),
+    validatePullRequestBuildAll / excludeFilter := NothingFilter,
     prValidatorGithubEnforcedBuildAll := {
       val log = streams.value.log
       val buildAllMagicPhrase = prValidatorBuildAllKeyword.value
@@ -182,9 +197,6 @@ object ValidatePullRequest extends AutoPlugin {
             false
         }
       }
-    },
-    prValidatorTravisNonPrEnforcedBuildAll := {
-      sys.env.get(TravisPullIdEnvVarName).contains("false")
     },
     prValidatorEnforcedBuildAll := prValidatorTravisNonPrEnforcedBuildAll.value || prValidatorGithubEnforcedBuildAll.value,
     prValidatorChangedProjects := {
