@@ -28,7 +28,7 @@ import scala.util.matching.Regex
 
 object ValidatePullRequest extends AutoPlugin {
 
-  case class Changes(allBuildMatched: Boolean, projectRefs: immutable.Set[ProjectRef])
+  final case class Changes(allBuildMatched: Boolean, projectRefs: immutable.Set[ProjectRef])
 
   /**
    * Like GlobFilter, but matches on the full path, and ** matches /, while * doesn't.
@@ -53,56 +53,55 @@ object ValidatePullRequest extends AutoPlugin {
           }
           .mkString(".*")
       )
-      new FileFilter {
-        override def accept(pathname: File): Boolean = pattern.matcher(pathname.getPath).matches()
-      }
+      (pathname: File) => pattern.matcher(pathname.getPath).matches()
     }
   }
 
   object autoImport {
     // git configuration
-    val prValidatorSourceBranch = settingKey[String]("Branch containing the changes of this PR")
-    val prValidatorTargetBranch = settingKey[String]("Target branch of this PR, defaults to `main`")
+    lazy val prValidatorSourceBranch = settingKey[String]("Branch containing the changes of this PR")
+    lazy val prValidatorTargetBranch = settingKey[String]("Target branch of this PR, defaults to `main`")
 
     // Configuration for what tasks to run in which scenarios
-    val prValidatorTasks =
+    lazy val prValidatorTasks =
       settingKey[Seq[TaskKey[_]]]("The tasks that should be run on a project when that project has changed")
-    val prValidatorBuildAllTasks = settingKey[Seq[TaskKey[_]]](
+    lazy val prValidatorBuildAllTasks = settingKey[Seq[TaskKey[_]]](
       "The tasks that should be run when one of the files that have changed matches the build all filters"
     )
-    val prValidatorEnforcedBuildAllTasks =
+    lazy val prValidatorEnforcedBuildAllTasks =
       settingKey[Seq[TaskKey[_]]]("The tasks that should be run when build all is explicitly requested")
 
     // enforced build all configuration
-    val prValidatorBuildAllKeyword = settingKey[Regex](
+    lazy val prValidatorBuildAllKeyword = settingKey[Regex](
       "Magic phrase to be used to trigger building of the entire project instead of analysing dependencies"
     )
-    val prValidatorGithubEndpoint = settingKey[URI](
+    lazy val prValidatorGithubEndpoint = settingKey[URI](
       "URI for the GitHub API, defaults to https://api.github.com. Override for GitHub enterprise, note that the URI for GitHub enterprise should end in /api/v3."
     )
-    val prValidatorGithubRepository = settingKey[Option[String]](
+    lazy val prValidatorGithubRepository = settingKey[Option[String]](
       "Optional name of the repository where Pull Requests are created. Necessary for explicit 'enforced build all'"
     )
-    val prValidatorGithubEnforcedBuildAll =
+    lazy val prValidatorGithubEnforcedBuildAll =
       taskKey[Boolean]("Checks via GitHub API if comments included the PLS BUILD ALL keyword.")
-    val prValidatorTravisNonPrEnforcedBuildAll = taskKey[Boolean]("Checks whether this is a non PR build on Travis.")
-    val prValidatorEnforcedBuildAll = taskKey[Boolean]("Whether an enforced build all is done.")
+    lazy val prValidatorTravisNonPrEnforcedBuildAll =
+      taskKey[Boolean]("Checks whether this is a non PR build on Travis.")
+    lazy val prValidatorEnforcedBuildAll = taskKey[Boolean]("Whether an enforced build all is done.")
 
     // determining touched dirs and projects
-    val prValidatorChangedProjects = taskKey[Changes]("List of touched projects in this PR branch")
-    val prValidatorProjectBuildTasks =
+    lazy val prValidatorChangedProjects = taskKey[Changes]("List of touched projects in this PR branch")
+    lazy val prValidatorProjectBuildTasks =
       taskKey[Seq[TaskKey[_]]]("The tasks that should be run, according to what has changed")
 
     // running validation
-    val validatePullRequest = taskKey[Unit]("Validate pull request")
-    val validatePullRequestBuildAll = taskKey[Unit]("Validate pull request, building all projects")
+    lazy val validatePullRequest = taskKey[Unit]("Validate pull request")
+    lazy val validatePullRequestBuildAll = taskKey[Unit]("Validate pull request, building all projects")
   }
 
   import autoImport._
 
-  override def trigger = allRequirements
+  override lazy val trigger = allRequirements
 
-  override def requires = plugins.JvmPlugin
+  override lazy val requires = plugins.JvmPlugin
 
   /*
     Assumptions:
@@ -122,16 +121,16 @@ object ValidatePullRequest extends AutoPlugin {
 
   private val SourceBranchEnvVarName = "PR_SOURCE_BRANCH"
 
-  private def localTargetBranch = sys.env.get(TargetBranchEnvVarName)
-  private def jenkinsTargetBranch = sys.env.get(TargetBranchJenkinsEnvVarName).map("origin/" + _)
-  private def travisTargetBranch = sys.env.get(TargetBranchTravisEnvVarName).map("origin/" + _)
+  private lazy val localTargetBranch = sys.env.get(TargetBranchEnvVarName)
+  private lazy val jenkinsTargetBranch = sys.env.get(TargetBranchJenkinsEnvVarName).map("origin/" + _)
+  private lazy val travisTargetBranch = sys.env.get(TargetBranchTravisEnvVarName).map("origin/" + _)
 
-  private def localSourceBranch = sys.env.get(SourceBranchEnvVarName)
-  private def jenkinsSourceBranch = sys.env.get(JenkinsPullIdEnvVarName).map("pullreq/" + _)
+  private lazy val localSourceBranch = sys.env.get(SourceBranchEnvVarName)
+  private lazy val jenkinsSourceBranch = sys.env.get(JenkinsPullIdEnvVarName).map("pullreq/" + _)
 
-  private def jenkinsPullRequestId = sys.env.get(JenkinsPullIdEnvVarName).map(_.toInt)
-  private def travisPullRequestId = sys.env.get(TravisPullIdEnvVarName).filterNot(_ == "false").map(_.toInt)
-  private def pullRequestId = jenkinsPullRequestId orElse travisPullRequestId
+  private lazy val jenkinsPullRequestId = sys.env.get(JenkinsPullIdEnvVarName).map(_.toInt)
+  private lazy val travisPullRequestId = sys.env.get(TravisPullIdEnvVarName).filterNot(_ == "false").map(_.toInt)
+  private lazy val pullRequestId = jenkinsPullRequestId orElse travisPullRequestId
 
   override lazy val buildSettings = Seq(
     validatePullRequest / includeFilter := "*",
@@ -173,9 +172,8 @@ object ValidatePullRequest extends AutoPlugin {
 
           val shouldBuildAll = commentsOpt.exists(comments => comments.exists(c => triggersBuildAll(c)))
 
-          if (shouldBuildAll) {
+          if (shouldBuildAll)
             log.info(s"Building all projects because of 'build all' Github comment")
-          }
 
           shouldBuildAll
         } catch {
@@ -207,11 +205,10 @@ object ValidatePullRequest extends AutoPlugin {
             .relativeTo(rootBaseDir)
             .map { relativePath =>
               val projRef = ProjectRef(extracted.structure.root, project.id)
-              if (relativePath.getPath == "") {
+              if (relativePath.getPath == "")
                 "" -> projRef
-              } else {
+              else
                 relativePath.getPath + "/" -> projRef
-              }
             }
         )
         .sortBy(_._1)
@@ -233,9 +230,8 @@ object ValidatePullRequest extends AutoPlugin {
         // Need to drop the leading status characters, followed by a space
         .map(l ⇒ file(l.trim.dropWhile(_ != ' ').drop(1)))
 
-      if (dirtyFiles.nonEmpty) {
+      if (dirtyFiles.nonEmpty)
         log.info("Detected uncommitted changes: " + dirtyFiles.take(5).mkString("[", ",", "]"))
-      }
 
       val allChangedFiles = diffedFiles ++ dirtyFiles
 
@@ -249,9 +245,8 @@ object ValidatePullRequest extends AutoPlugin {
           }
         }
 
-      if (allBuildMatched) {
+      if (allBuildMatched)
         log.info("Building all modules because the all build filter was matched")
-      }
 
       Changes(allBuildMatched, changedProjects.toSet)
     }
@@ -312,7 +307,7 @@ object ValidatePullRequest extends AutoPlugin {
             taskSeq :+ task.asInstanceOf[Task[Any]]
           }
         } apply { tasks: Seq[Task[Any]] =>
-        tasks.join map { seq => () /* Ignore the sequence of unit returned */ }
+        tasks.join map { _ => () /* Ignore the sequence of unit returned */ }
       }
     }.value,
     validatePullRequestBuildAll := Def.taskDyn {
@@ -335,7 +330,7 @@ object ValidatePullRequest extends AutoPlugin {
             taskSeq :+ task.asInstanceOf[Task[Any]]
           }
         } apply { tasks: Seq[Task[Any]] =>
-        tasks.join map { seq => () /* Ignore the sequence of unit returned */ }
+        tasks.join map { _ => () /* Ignore the sequence of unit returned */ }
       }
     }
   )
