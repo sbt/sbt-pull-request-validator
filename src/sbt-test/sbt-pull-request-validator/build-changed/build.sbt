@@ -1,9 +1,12 @@
-
-lazy val a = project.in(file("a"))
+lazy val a = project
+  .in(file("a"))
   .settings(commonSettings)
-lazy val b = project.in(file("b")).dependsOn(a)
+lazy val b = project
+  .in(file("b"))
+  .dependsOn(a)
   .settings(commonSettings)
-lazy val c = project.in(file("c"))
+lazy val c = project
+  .in(file("c"))
   .settings(commonSettings)
 
 lazy val root = project.in(file(".")).settings(commonSettings).aggregate(a, b, c)

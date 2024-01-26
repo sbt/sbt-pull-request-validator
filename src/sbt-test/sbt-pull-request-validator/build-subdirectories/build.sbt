@@ -1,12 +1,18 @@
 name := "root-project"
 
-lazy val a = project.in(file("modules/a"))
+lazy val a = project
+  .in(file("modules/a"))
   .settings(commonSettings)
-lazy val b = project.in(file("modules/b")).dependsOn(a)
+lazy val b = project
+  .in(file("modules/b"))
+  .dependsOn(a)
   .settings(commonSettings)
-lazy val c = project.in(file("modules/c"))
+lazy val c = project
+  .in(file("modules/c"))
   .settings(commonSettings)
-lazy val d = project.in(file("modules/extra-dir/d")).dependsOn(a)
+lazy val d = project
+  .in(file("modules/extra-dir/d"))
+  .dependsOn(a)
   .settings(commonSettings)
 
 lazy val root = project.in(file(".")).settings(commonSettings).aggregate(a, b, c, d)

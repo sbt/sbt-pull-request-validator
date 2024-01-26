@@ -1,4 +1,3 @@
-
 lazy val a = project.in(file("a")).settings(commonSettings)
 
 lazy val root = project.in(file(".")).settings(commonSettings).aggregate(a)
@@ -16,7 +15,6 @@ def commonSettings = Seq(
     IO.write(targetFile, "Test ran")
   },
   prValidatorBuildAllTasks := Seq(detectRunAll)
-
 )
 ThisBuild / prValidatorTargetBranch := "targetBranch"
 ThisBuild / prValidatorTravisNonPrEnforcedBuildAll := false

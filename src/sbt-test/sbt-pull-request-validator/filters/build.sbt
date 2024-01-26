@@ -1,4 +1,3 @@
-
 lazy val a = project.in(file("a")).settings(commonSettings)
 lazy val b = project.in(file("b")).settings(commonSettings)
 lazy val c = project.in(file("c")).settings(commonSettings)
@@ -23,4 +22,3 @@ ThisBuild / validatePullRequest / includeFilter := (GlobFilter("*.include")
 
 ThisBuild / validatePullRequest / excludeFilter := (ValidatePullRequest.PathGlobFilter("**/exclude/*") ||
   ValidatePullRequest.PathGlobFilter("b/dont.include"))
-
