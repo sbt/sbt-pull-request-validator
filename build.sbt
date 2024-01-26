@@ -4,6 +4,10 @@ lazy val `sbt-pull-request-validator` = (project in file("."))
 sbtPlugin := true
 enablePlugins(SbtPlugin)
 
+lazy val scala212 = "2.12.18"
+ThisBuild / crossScalaVersions := Seq(scala212)
+ThisBuild / scalaVersion := scala212
+
 organization := "com.hpe.sbt"
 
 homepage := Some(url("https://github.com/sbt/sbt-pull-request-validator"))
@@ -41,4 +45,31 @@ releaseProcess := Seq[ReleaseStep](
   setNextVersion,
   commitNextVersion,
   pushChanges
+)
+
+ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
+
+ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
+// Remove this when we set up publishing via sbt-ci-release
+ThisBuild / githubWorkflowPublishTargetBranches := Seq()
+
+ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
+
+ThisBuild / githubWorkflowJavaVersions := Seq(
+  JavaSpec.temurin("8"),
+  JavaSpec.temurin("11"),
+  JavaSpec.temurin("17"),
+  JavaSpec.temurin("21")
+)
+
+// Necessary to setup git so that sbt-scripted tests can run on github actions
+ThisBuild / githubWorkflowBuildPreamble := Seq(
+  WorkflowStep.Run(
+    commands = List(
+      "git config --global init.defaultBranch main",
+      """git config --global user.email "sbt-pull-request-validator@github.com"""",
+      """git config --global user.name "Sbt Pull Request Validator""""
+    ),
+    name = Some("Setup git")
+  )
 )
