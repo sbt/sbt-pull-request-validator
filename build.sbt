@@ -23,35 +23,26 @@ scriptedLaunchOpts ++= Seq(
   "-Dplugin.version=" + version.value
 )
 
-// Bintray
-bintrayOrganization := Some("sbt")
-bintrayRepository := "sbt-plugin-releases"
-bintrayPackage := "sbt-pull-request-validator"
-bintrayReleaseOnPublish := false
-
-// Release
-import ReleaseTransformations._
-releaseProcess := Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  releaseStepCommandAndRemaining("test"),
-  releaseStepCommandAndRemaining("scripted"),
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  releaseStepCommandAndRemaining("publish"),
-  releaseStepTask(`sbt-pull-request-validator` / bintrayRelease),
-  setNextVersion,
-  commitNextVersion,
-  pushChanges
-)
-
 ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
 
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
-// Remove this when we set up publishing via sbt-ci-release
-ThisBuild / githubWorkflowPublishTargetBranches := Seq()
+ThisBuild / githubWorkflowPublishTargetBranches :=
+  Seq(
+    RefPredicate.StartsWith(Ref.Tag("v")),
+    RefPredicate.Equals(Ref.Branch("main"))
+  )
+ThisBuild / githubWorkflowPublish := Seq(
+  WorkflowStep.Sbt(
+    commands = List("ci-release"),
+    name = Some("Publish project"),
+    env = Map(
+      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+    )
+  )
+)
 
 ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
 
