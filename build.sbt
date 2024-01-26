@@ -2,6 +2,7 @@ lazy val `sbt-pull-request-validator` = (project in file("."))
   .enablePlugins(AutomateHeaderPlugin)
 
 sbtPlugin := true
+enablePlugins(SbtPlugin)
 
 organization := "com.hpe.sbt"
 
@@ -36,7 +37,7 @@ releaseProcess := Seq[ReleaseStep](
   commitReleaseVersion,
   tagRelease,
   releaseStepCommandAndRemaining("publish"),
-  releaseStepTask(bintrayRelease in `sbt-pull-request-validator`),
+  releaseStepTask(`sbt-pull-request-validator` / bintrayRelease),
   setNextVersion,
   commitNextVersion,
   pushChanges
