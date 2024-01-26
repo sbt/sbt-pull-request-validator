@@ -134,10 +134,10 @@ object ValidatePullRequest extends AutoPlugin {
   private def pullRequestId = jenkinsPullRequestId orElse travisPullRequestId
 
   override lazy val buildSettings = Seq(
-    includeFilter in validatePullRequest := "*",
-    excludeFilter in validatePullRequest := "README.*",
-    includeFilter in validatePullRequestBuildAll := PathGlobFilter("project/**") || PathGlobFilter("*.sbt"),
-    excludeFilter in validatePullRequestBuildAll := NothingFilter,
+    validatePullRequest / includeFilter := "*",
+    validatePullRequest / excludeFilter := "README.*",
+    validatePullRequestBuildAll / includeFilter := PathGlobFilter("project/**") || PathGlobFilter("*.sbt"),
+    validatePullRequestBuildAll / excludeFilter := NothingFilter,
     prValidatorSourceBranch := {
       localSourceBranch orElse jenkinsSourceBranch getOrElse "HEAD"
     },
@@ -198,7 +198,7 @@ object ValidatePullRequest extends AutoPlugin {
 
       val state = Keys.state.value
       val extracted = Project.extract(state)
-      val rootBaseDir = (baseDirectory in ThisBuild).value
+      val rootBaseDir = (ThisBuild / baseDirectory).value
       // All projects in reverse order of path, this ensures when we search through them, we get the most specific
       // first
       val projects = extracted.structure.allProjects
@@ -217,9 +217,9 @@ object ValidatePullRequest extends AutoPlugin {
         .sortBy(_._1)
         .reverse
 
-      val filter = (includeFilter in validatePullRequest).value -- (excludeFilter in validatePullRequest).value
+      val filter = (validatePullRequest / includeFilter).value -- (validatePullRequest / excludeFilter).value
       val allBuildFilter =
-        (includeFilter in validatePullRequestBuildAll).value -- (excludeFilter in validatePullRequestBuildAll).value
+        (validatePullRequestBuildAll / includeFilter).value -- (validatePullRequestBuildAll / excludeFilter).value
 
       log.info(s"Diffing [$prId] to determine changed modules in PR...")
       val diffOutput = s"git diff $target --name-only".!!.split("\n")
@@ -289,7 +289,7 @@ object ValidatePullRequest extends AutoPlugin {
         Seq()
       }
     },
-    prValidatorTasks := Seq(test in Test),
+    prValidatorTasks := Seq(Test / test),
     prValidatorBuildAllTasks := prValidatorTasks.value,
     prValidatorEnforcedBuildAllTasks := prValidatorBuildAllTasks.value,
     validatePullRequest := Def.taskDyn {
