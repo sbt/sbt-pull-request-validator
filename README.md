@@ -1,5 +1,7 @@
 # GitHub Pull Request Validator
 
+[![Continuous Integration](https://github.com/sbt/sbt-pull-request-validator/actions/workflows/ci.yml/badge.svg)](https://github.com/sbt/sbt-pull-request-validator/actions/workflows/ci.yml)
+
 This plugin provides pull request optimization support for GitHub validators. It works with both [Travis](https://travis-ci.org) and the [Jenkins Pull Request Builder plugin](https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin). Optimization is done by only building projects that have changed files, and the projects that depend on them.
 
 This was originally written by [@ktoso](https://github.com/ktoso) for Akka, and extracted into a standalone sbt plugin and generalized by HPE.
