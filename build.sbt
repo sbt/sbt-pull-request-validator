@@ -8,7 +8,7 @@ lazy val scala212 = "2.12.18"
 ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
 
-organization := "com.hpe.sbt"
+organization := "com.github.sbt"
 
 homepage := Some(url("https://github.com/sbt/sbt-pull-request-validator"))
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
