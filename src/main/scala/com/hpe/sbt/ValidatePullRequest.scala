@@ -62,7 +62,7 @@ object ValidatePullRequest extends AutoPlugin {
   object autoImport {
     // git configuration
     val prValidatorSourceBranch = settingKey[String]("Branch containing the changes of this PR")
-    val prValidatorTargetBranch = settingKey[String]("Target branch of this PR, defaults to `master`")
+    val prValidatorTargetBranch = settingKey[String]("Target branch of this PR, defaults to `main`")
 
     // Configuration for what tasks to run in which scenarios
     val prValidatorTasks =
@@ -142,7 +142,7 @@ object ValidatePullRequest extends AutoPlugin {
       localSourceBranch orElse jenkinsSourceBranch getOrElse "HEAD"
     },
     prValidatorTargetBranch := {
-      localTargetBranch orElse jenkinsTargetBranch orElse travisTargetBranch getOrElse "origin/master"
+      localTargetBranch orElse jenkinsTargetBranch orElse travisTargetBranch getOrElse "origin/main"
     },
     prValidatorGithubEndpoint := uri("https://api.github.com"),
     prValidatorGithubRepository := sys.env.get(TravisRepoName),
