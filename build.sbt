@@ -23,6 +23,25 @@ scriptedLaunchOpts ++= Seq(
   "-Dplugin.version=" + version.value
 )
 
+scalacOptions ++= Seq(
+  "-unchecked",
+  "-deprecation",
+  "-Xlint",
+  "-encoding",
+  "UTF-8"
+)
+
+scalacOptions ++= {
+  if (insideCI.value) {
+    val log = sLog.value
+    log.info("Running in CI, enabling Scala2 optimizer")
+    Seq(
+      "-opt-inline-from:<sources>",
+      "-opt:l:inline"
+    )
+  } else Nil
+}
+
 // So that publishLocal doesn't continuously create new versions
 def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
   val snapshotSuffix =
