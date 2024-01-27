@@ -1,5 +1,4 @@
-lazy val `sbt-pull-request-validator` = (project in file("."))
-  .enablePlugins(AutomateHeaderPlugin)
+lazy val `sbt-pull-request-validator` = project in file(".")
 
 sbtPlugin := true
 enablePlugins(SbtPlugin)
@@ -13,7 +12,6 @@ organization := "com.github.sbt"
 homepage := Some(url("https://github.com/sbt/sbt-pull-request-validator"))
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-organizationName := "Hewlett Packard Enterprise"
 startYear := Some(2018)
 
 // https://mvnrepository.com/artifact/org.kohsuke/github-api
