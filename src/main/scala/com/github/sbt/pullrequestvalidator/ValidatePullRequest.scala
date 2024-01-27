@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hpe.sbt
+package com.github.sbt.pullrequestvalidator
 
 import java.util.regex.Pattern
 
