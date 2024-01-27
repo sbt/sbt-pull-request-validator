@@ -17,7 +17,7 @@ organizationName := "Hewlett Packard Enterprise"
 startYear := Some(2018)
 
 // https://mvnrepository.com/artifact/org.kohsuke/github-api
-libraryDependencies += "org.kohsuke" % "github-api" % "1.93"
+libraryDependencies += "org.kohsuke" % "github-api" % "1.314"
 
 scriptedLaunchOpts ++= Seq(
   "-Dplugin.version=" + version.value
