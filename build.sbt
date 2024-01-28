@@ -14,6 +14,15 @@ licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"
 
 startYear := Some(2018)
 
+ThisBuild / developers := List(
+  Developer(
+    "sbt-pull-request-validator",
+    "Sbt Pull Request Validator Contributors",
+    "",
+    url("https://github.com/sbt/sbt-pull-request-validator/graphs/contributors")
+  )
+)
+
 // https://mvnrepository.com/artifact/org.kohsuke/github-api
 libraryDependencies += "org.kohsuke" % "github-api" % "1.314"
 
