@@ -24,7 +24,7 @@ ThisBuild / developers := List(
 )
 
 // https://mvnrepository.com/artifact/org.kohsuke/github-api
-libraryDependencies += "org.kohsuke" % "github-api" % "1.314"
+libraryDependencies += "org.kohsuke" % "github-api" % "1.319"
 
 scriptedLaunchOpts ++= Seq(
   "-Dplugin.version=" + version.value
