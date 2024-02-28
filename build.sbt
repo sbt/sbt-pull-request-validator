@@ -3,7 +3,7 @@ lazy val `sbt-pull-request-validator` = project in file(".")
 sbtPlugin := true
 enablePlugins(SbtPlugin)
 
-lazy val scala212 = "2.12.18"
+lazy val scala212 = "2.12.19"
 ThisBuild / crossScalaVersions := Seq(scala212)
 ThisBuild / scalaVersion := scala212
 
