@@ -86,7 +86,7 @@ ThisBuild / githubWorkflowPublish := Seq(
   )
 )
 
-ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-12")
+ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
 
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.temurin("8"),
@@ -94,6 +94,9 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.temurin("17"),
   JavaSpec.temurin("21")
 )
+
+ThisBuild / githubWorkflowBuildMatrixExclusions +=
+  MatrixExclude(Map("java" -> "temurin@8", "os" -> "macos-latest"))
 
 // Necessary to setup git so that sbt-scripted tests can run on github actions
 ThisBuild / githubWorkflowBuildPreamble := Seq(
