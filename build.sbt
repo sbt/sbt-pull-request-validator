@@ -86,7 +86,7 @@ ThisBuild / githubWorkflowPublish := Seq(
   )
 )
 
-ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-12")
+ThisBuild / githubWorkflowOSes := Seq("ubuntu-latest", "macos-latest")
 
 ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.temurin("8"),
@@ -95,8 +95,22 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.temurin("21")
 )
 
+ThisBuild / githubWorkflowBuildMatrixExclusions +=
+  MatrixExclude(Map("java" -> "temurin@8", "os" -> "macos-latest"))
+
+// GitHub Actions macOS 13+ runner images do not come with sbt preinstalled anymore
+ThisBuild / githubWorkflowBuildPreamble ++= Seq(
+  WorkflowStep.Run(
+    commands = List(
+      "brew install sbt"
+    ),
+    cond = Some("matrix.os == 'macos-latest'"),
+    name = Some("Install sbt")
+  )
+)
+
 // Necessary to setup git so that sbt-scripted tests can run on github actions
-ThisBuild / githubWorkflowBuildPreamble := Seq(
+ThisBuild / githubWorkflowBuildPreamble ++= Seq(
   WorkflowStep.Run(
     commands = List(
       "git config --global init.defaultBranch main",
