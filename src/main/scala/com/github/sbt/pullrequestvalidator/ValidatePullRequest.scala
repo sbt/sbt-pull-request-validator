@@ -59,12 +59,12 @@ object ValidatePullRequest extends AutoPlugin {
 
     // Configuration for what tasks to run in which scenarios
     lazy val prValidatorTasks =
-      settingKey[Seq[TaskKey[_]]]("The tasks that should be run on a project when that project has changed")
-    lazy val prValidatorBuildAllTasks = settingKey[Seq[TaskKey[_]]](
+      settingKey[Seq[TaskKey[?]]]("The tasks that should be run on a project when that project has changed")
+    lazy val prValidatorBuildAllTasks = settingKey[Seq[TaskKey[?]]](
       "The tasks that should be run when one of the files that have changed matches the build all filters"
     )
     lazy val prValidatorEnforcedBuildAllTasks =
-      settingKey[Seq[TaskKey[_]]]("The tasks that should be run when build all is explicitly requested")
+      settingKey[Seq[TaskKey[?]]]("The tasks that should be run when build all is explicitly requested")
 
     // enforced build all configuration
     lazy val prValidatorBuildAllKeyword = settingKey[Regex](
@@ -85,7 +85,7 @@ object ValidatePullRequest extends AutoPlugin {
     // determining touched dirs and projects
     lazy val prValidatorChangedProjects = taskKey[Changes]("List of touched projects in this PR branch")
     lazy val prValidatorProjectBuildTasks =
-      taskKey[Seq[TaskKey[_]]]("The tasks that should be run, according to what has changed")
+      taskKey[Seq[TaskKey[?]]]("The tasks that should be run, according to what has changed")
 
     // running validation
     lazy val validatePullRequest = taskKey[Unit]("Validate pull request")
@@ -235,7 +235,7 @@ object ValidatePullRequest extends AutoPlugin {
       val dirtyFiles = statusOutput
         .filterNot(_.isEmpty)
         // Need to drop the leading status characters, followed by a space
-        .map(l ⇒ file(l.trim.dropWhile(_ != ' ').drop(1)))
+        .map(l => file(l.trim.dropWhile(_ != ' ').drop(1)))
 
       if (dirtyFiles.nonEmpty)
         log.info("Detected uncommitted changes: " + dirtyFiles.take(5).mkString("[", ",", "]"))
@@ -313,7 +313,7 @@ object ValidatePullRequest extends AutoPlugin {
           acc.zipWith(current) { case (taskSeq, task) =>
             taskSeq :+ task.asInstanceOf[Task[Any]]
           }
-        } apply { tasks: Seq[Task[Any]] =>
+        } apply { (tasks: Seq[Task[Any]]) =>
         tasks.join map { _ => () /* Ignore the sequence of unit returned */ }
       }
     }.value,
@@ -336,7 +336,7 @@ object ValidatePullRequest extends AutoPlugin {
           acc.zipWith(current) { case (taskSeq, task) =>
             taskSeq :+ task.asInstanceOf[Task[Any]]
           }
-        } apply { tasks: Seq[Task[Any]] =>
+        } apply { (tasks: Seq[Task[Any]]) =>
         tasks.join map { _ => () /* Ignore the sequence of unit returned */ }
       }
     }
