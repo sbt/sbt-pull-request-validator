@@ -76,19 +76,26 @@ object ValidatePullRequest extends AutoPlugin {
     lazy val prValidatorGithubRepository = settingKey[Option[String]](
       "Optional name of the repository where Pull Requests are created. Necessary for explicit 'enforced build all'"
     )
+    @transient
     lazy val prValidatorGithubEnforcedBuildAll =
       taskKey[Boolean]("Checks via GitHub API if comments included the PLS BUILD ALL keyword.")
+    @transient
     lazy val prValidatorTravisNonPrEnforcedBuildAll =
       taskKey[Boolean]("Checks whether this is a non PR build on Travis.")
+    @transient
     lazy val prValidatorEnforcedBuildAll = taskKey[Boolean]("Whether an enforced build all is done.")
 
     // determining touched dirs and projects
+    @transient
     lazy val prValidatorChangedProjects = taskKey[Changes]("List of touched projects in this PR branch")
+    @transient
     lazy val prValidatorProjectBuildTasks =
       taskKey[Seq[TaskKey[?]]]("The tasks that should be run, according to what has changed")
 
     // running validation
+    @transient
     lazy val validatePullRequest = taskKey[Unit]("Validate pull request")
+    @transient
     lazy val validatePullRequestBuildAll = taskKey[Unit]("Validate pull request, building all projects")
   }
 
@@ -161,7 +168,7 @@ object ValidatePullRequest extends AutoPlugin {
       val buildAllMagicPhrase = prValidatorBuildAllKeyword.value
       val githubRepository = prValidatorGithubRepository.value
       val githubEndpoint = prValidatorGithubEndpoint.value
-      val githubCredentials = Credentials.forHost(credentials.value, githubEndpoint.getHost)
+      val githubCredentials = ValidatePullRequestCompat.credentialsForHost(credentials.value, githubEndpoint.getHost)
 
       pullRequestId.exists { prId =>
         log.info("Checking GitHub comments for PR validation options...")
@@ -291,7 +298,7 @@ object ValidatePullRequest extends AutoPlugin {
         Seq()
       }
     },
-    prValidatorTasks := Seq(Test / test),
+    prValidatorTasks := Seq(Test / ValidatePullRequestCompat.testFull),
     prValidatorBuildAllTasks := prValidatorTasks.value,
     prValidatorEnforcedBuildAllTasks := prValidatorBuildAllTasks.value,
     validatePullRequest := Def.taskDyn {
