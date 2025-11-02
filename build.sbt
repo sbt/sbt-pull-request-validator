@@ -4,8 +4,30 @@ sbtPlugin := true
 enablePlugins(SbtPlugin)
 
 lazy val scala212 = "2.12.20"
-ThisBuild / crossScalaVersions := Seq(scala212)
+lazy val scala3 = "3.7.3"
+ThisBuild / crossScalaVersions := Seq(scala212, scala3)
 ThisBuild / scalaVersion := scala212
+
+pluginCrossBuild / sbtVersion := {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      sbtVersion.value
+    case _ =>
+      "2.0.0-RC6"
+  }
+}
+
+TaskKey[Unit]("runScriptedTests") := Def.taskDyn {
+  scalaBinaryVersion.value match {
+    case "3" =>
+      // TODO enable sbt 2 test
+      Def.task {
+        streams.value.log.warn("skip sbt 2 scripted test")
+      }
+    case _ =>
+      scripted.toTask("")
+  }
+}.value
 
 organization := "com.github.sbt"
 
@@ -65,7 +87,7 @@ ThisBuild / dynver := {
   sbtdynver.DynVer.getGitDescribeOutput(d).mkVersion(versionFmt, fallbackVersion(d))
 }
 
-ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
+ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "runScriptedTests")))
 
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches :=
