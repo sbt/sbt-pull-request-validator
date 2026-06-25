@@ -31,7 +31,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -77,9 +77,9 @@ jobs:
           git config --global user.name "Sbt Pull Request Validator"
 
       - name: Check that workflows are up to date
-        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
+        run: sbt '++ ${{ matrix.scala }}; githubWorkflowCheck'
 
-      - run: sbt '++ ${{ matrix.scala }}' test scripted
+      - run: sbt '++ ${{ matrix.scala }}; test; scripted'
 
       - name: Compress target directories
         run: tar cf targets.tar target project/target
@@ -102,7 +102,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
