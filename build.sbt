@@ -4,8 +4,30 @@ sbtPlugin := true
 enablePlugins(SbtPlugin)
 
 lazy val scala212 = "2.12.21"
-ThisBuild / crossScalaVersions := Seq(scala212)
+lazy val scala3 = "3.8.4"
+ThisBuild / crossScalaVersions := Seq(scala212, scala3)
 ThisBuild / scalaVersion := scala212
+
+pluginCrossBuild / sbtVersion := {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      sbtVersion.value
+    case _ =>
+      "2.0.12"
+  }
+}
+
+TaskKey[Unit]("runScriptedTests") := Def.taskDyn {
+  scalaBinaryVersion.value match {
+    case "3" =>
+      // TODO enable sbt 2 test
+      Def.task {
+        streams.value.log.warn("skip sbt 2 scripted test")
+      }
+    case _ =>
+      scripted.toTask("")
+  }
+}.value
 
 organization := "com.github.sbt"
 
@@ -39,7 +61,16 @@ scalacOptions ++= Seq(
 )
 
 scalacOptions ++= {
-  if (insideCI.value) {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      Seq("-release:8")
+    case "3" =>
+      Nil
+  }
+}
+
+scalacOptions ++= {
+  if (insideCI.value && (scalaBinaryVersion.value == "2.12")) {
     val log = sLog.value
     log.info("Running in CI, enabling Scala2 optimizer")
     Seq(
@@ -65,7 +96,7 @@ ThisBuild / dynver := {
   sbtdynver.DynVer.getGitDescribeOutput(d).mkVersion(versionFmt, fallbackVersion(d))
 }
 
-ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "scripted")))
+ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "runScriptedTests")))
 
 ThisBuild / githubWorkflowTargetTags ++= Seq("v*")
 ThisBuild / githubWorkflowPublishTargetBranches :=
@@ -95,8 +126,11 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.temurin("21")
 )
 
-ThisBuild / githubWorkflowBuildMatrixExclusions +=
-  MatrixExclude(Map("java" -> "temurin@8", "os" -> "macos-latest"))
+ThisBuild / githubWorkflowBuildMatrixExclusions ++= Seq(
+  MatrixExclude(Map("java" -> "temurin@8", "os" -> "macos-latest")),
+  MatrixExclude(Map("java" -> "temurin@8", "scala" -> scala3)),
+  MatrixExclude(Map("java" -> "temurin@11", "scala" -> scala3))
+)
 
 // Necessary to setup git so that sbt-scripted tests can run on github actions
 ThisBuild / githubWorkflowBuildPreamble := Seq(
