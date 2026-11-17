@@ -4,30 +4,20 @@ sbtPlugin := true
 enablePlugins(SbtPlugin)
 
 lazy val scala212 = "2.12.21"
-lazy val scala3 = "3.8.4"
+lazy val scala3 = "3.9.0"
 ThisBuild / crossScalaVersions := Seq(scala212, scala3)
 ThisBuild / scalaVersion := scala212
 
 pluginCrossBuild / sbtVersion := {
   scalaBinaryVersion.value match {
     case "2.12" =>
-      sbtVersion.value
+      "1.13.1"
     case _ =>
-      "2.0.12"
+      "2.1.0"
   }
 }
 
-TaskKey[Unit]("runScriptedTests") := Def.taskDyn {
-  scalaBinaryVersion.value match {
-    case "3" =>
-      // TODO enable sbt 2 test
-      Def.task {
-        streams.value.log.warn("skip sbt 2 scripted test")
-      }
-    case _ =>
-      scripted.toTask("")
-  }
-}.value
+TaskKey[Unit]("runScriptedTests") := scripted.toTask("").value
 
 organization := "com.github.sbt"
 
@@ -63,7 +53,7 @@ scalacOptions ++= Seq(
 scalacOptions ++= {
   scalaBinaryVersion.value match {
     case "2.12" =>
-      Seq("-release:8")
+      Seq("-Xsource:3", "-release:8")
     case "3" =>
       Nil
   }
@@ -123,7 +113,8 @@ ThisBuild / githubWorkflowJavaVersions := Seq(
   JavaSpec.temurin("8"),
   JavaSpec.temurin("11"),
   JavaSpec.temurin("17"),
-  JavaSpec.temurin("21")
+  JavaSpec.temurin("21"),
+  JavaSpec.temurin("25")
 )
 
 ThisBuild / githubWorkflowBuildMatrixExclusions ++= Seq(
@@ -143,3 +134,5 @@ ThisBuild / githubWorkflowBuildPreamble := Seq(
     name = Some("Setup git")
   )
 )
+
+ThisBuild / githubWorkflowPublishJavaVersion := JavaSpec.temurin("17")
