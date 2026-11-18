@@ -1,3 +1,5 @@
+import sbtcompat.PluginCompat._
+
 lazy val a = project.in(file("a")).settings(commonSettings)
 lazy val b = project.in(file("b")).settings(commonSettings)
 lazy val c = project.in(file("c")).settings(commonSettings)
@@ -8,7 +10,8 @@ lazy val root = project.in(file(".")).settings(commonSettings).aggregate(a, b, c
 val detectRun = taskKey[Unit]("")
 val detectRunAll = taskKey[Unit]("")
 def commonSettings = Seq(
-  detectRun := {
+  target := baseDirectory.value / "target",
+  detectRun := Def.uncached {
     val targetFile = target.value / "ran"
     IO.write(targetFile, "Test ran")
   },
@@ -17,8 +20,8 @@ def commonSettings = Seq(
 ThisBuild / prValidatorTargetBranch := "targetBranch"
 ThisBuild / prValidatorTravisNonPrEnforcedBuildAll := false
 
-ThisBuild / validatePullRequest / includeFilter := (GlobFilter("*.include")
-  || ValidatePullRequest.PathGlobFilter("**/inc/*")) || ValidatePullRequest.PathGlobFilter("a/include/this")
+ThisBuild / validatePullRequest / includeFilter := (GlobFilter("*.include") ||
+  ValidatePullRequest.PathGlobFilter("**/inc/*")) || ValidatePullRequest.PathGlobFilter("a/include/this")
 
 ThisBuild / validatePullRequest / excludeFilter := (ValidatePullRequest.PathGlobFilter("**/exclude/*") ||
   ValidatePullRequest.PathGlobFilter("b/dont.include"))

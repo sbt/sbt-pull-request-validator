@@ -12,12 +12,12 @@
 package com.github.sbt.pullrequestvalidator
 
 import sbt.Credentials
-import sbt.internal.librarymanagement.ivy.IvyCredentials
+import sbt.librarymanagement.CredentialUtils
 import sbt.librarymanagement.Credentials.DirectCredentials
 
 private[pullrequestvalidator] object ValidatePullRequestCompat {
   def credentialsForHost(sc: Seq[Credentials], host: String): Option[DirectCredentials] =
-    IvyCredentials.forHost(sc, host)
+    CredentialUtils.forHost(sc, host)
 
   def testFull = sbt.Keys.testFull
 }

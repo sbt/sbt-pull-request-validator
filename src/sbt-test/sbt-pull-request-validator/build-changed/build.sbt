@@ -1,3 +1,5 @@
+import sbtcompat.PluginCompat._
+
 lazy val a = project
   .in(file("a"))
   .settings(commonSettings)
@@ -13,7 +15,8 @@ lazy val root = project.in(file(".")).settings(commonSettings).aggregate(a, b, c
 
 val detectRun = taskKey[Unit]("")
 def commonSettings = Seq(
-  detectRun := {
+  target := baseDirectory.value / "target",
+  detectRun := Def.uncached {
     val targetFile = target.value / "ran"
     IO.write(targetFile, "Test ran")
   },
